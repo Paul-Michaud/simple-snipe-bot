@@ -20,8 +20,8 @@ client.on("ready", () => {
 
 });
 
-client.on("error", () => {
-	console.log("Error");
+client.on("error", error => {
+	console.log(error);
 });
 
 client.on("message", msg => {
