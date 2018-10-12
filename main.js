@@ -89,7 +89,7 @@ client.on("message", msg => {
 		}
 
 		let nbOfLobby = Object.keys(snipe.games).length;
-		let averageTeam = totalCaptains / nbOfLobby;
+		let averageTeam = (totalCaptains / nbOfLobby).toFixed(2);
 		msg.channel.send("**Stats**\nLobby : " + nbOfLobby + "\nAverage teams : " + averageTeam + "\nTotal captains " + totalCaptains);
 	}
 });
@@ -106,10 +106,8 @@ function refreshBoard(digits) {
 	}
 
 	const embed = new Discord.RichEmbed()
-		.setTitle(digits + " ("+snipe.games[digits].players.length+"/25)")
 		.setColor(0xC63B00)
-		.setTimestamp()
-		.addField("Team captains", playersInLobby, true);
+		.addField(digits + " ("+snipe.games[digits].players.length+"/25)", playersInLobby, true);
 
 	if(snipe.games[digits].msgid == null) {
 		boardChannel.send({embed}).then(sentMessage => snipe.games[digits].msgid = sentMessage.id);
@@ -123,3 +121,4 @@ function refreshBoard(digits) {
 }
 
 client.login(config.token);
+
