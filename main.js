@@ -19,6 +19,9 @@ client.on("ready", () => {
 
 	if (!botCommandChannel || !boardChannel || !adminChannel) return;
 
+	client.user.setActivity('@Millionnnnnnn', { type: 'WATCHING' })
+	  .then(presence => console.log(`Activity set to ${presence.game ? presence.game.name : 'none'}`))
+	  .catch(console.error);
 });
 
 client.on("error", error => {
