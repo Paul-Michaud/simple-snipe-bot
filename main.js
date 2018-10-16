@@ -27,27 +27,10 @@ client.on("error", error => {
 
 client.on("message", msg => {
 
-
-
-	if ((msg.channel != botCommandChannel) && (msg.channel != adminChannel)) {
-		//console.log("Only listen to specified channel");
-		return;
-	}
-
-	if (msg.author.bot) {
-		//console.log("Ignore bots.");
-		return;
-	}
-
-	if (msg.channel.type === "dm") {
-		//console.log("Ignore DM channels.");
-		return;
-	}
-
-	if (!msg.content.startsWith(prefix)) {
-		//console.log("Message doesn't start with prefix");
-		return;
-	}
+	if ((msg.channel != botCommandChannel) && (msg.channel != adminChannel)) return;
+	if (msg.author.bot) return;
+	if (msg.channel.type === "dm") return;
+	if (!msg.content.startsWith(prefix)) return;
 
 	const args = msg.content.slice(prefix.length).trim().split(/ +/g);
 	const command = args.shift().toLowerCase();
@@ -59,46 +42,37 @@ client.on("message", msg => {
 		console.log("Call : add("+digits+","+user+")");
 		snipe.add(digits, user);
 		refreshBoard(digits);
-	} else
-	if (command === "remove") {
+	} else if (command === "remove") {
 		if(args.length != 1) return;
 		const digits = args[0];
 		console.log("Call : remove("+digits+","+user+")");
 		snipe.remove(digits, user);
 		refreshBoard(digits);
-	} else
-	if (command === "reset") {
-		if (msg.channel != adminChannel) {
-			//console.log("Only listen to admin channel");
-			return;
-		}
+	} else if (command === "reset") {
+		if (msg.channel != adminChannel) return;
+
 		console.log("Reset");
 		delete snipe;
 		snipe = new Snipe();
 		msg.channel.send("New snipe started.");
-	} else
-	if (command === "stats") {
-		if (msg.channel != adminChannel) {
-			//console.log("Only listen to admin channel");
-			return;
-		}
+	} else	if (command === "stats") {
+		if (msg.channel != adminChannel) return;
+
 		let totalCaptains = 0;
+		let nbOfLobby = 0;
+		let nbOfGoodLobby = 0;
 		let totalCaptainsInGoodLobby = 0;
 
-		// good lobby = more than 1 captain
-		let nbOfGoodLobby = 0;
-		let nbOfLobby = 0;
 		for(var game in snipe.games) {
 			if(game == "Solo") {
 				continue;
 			} else {
 				nbOfLobby++;
+				totalCaptains+=snipe.games[game].players.length;
 				if(snipe.games[game].players.length > 1) {
 					nbOfGoodLobby++;
 					totalCaptainsInGoodLobby+=snipe.games[game].players.length;
 				}
-				totalCaptains+=snipe.games[game].players.length;
-
 			}
 		}
 
@@ -109,7 +83,7 @@ client.on("message", msg => {
 
 
 function refreshBoard(digits) {
-	//Si dans ce digit juste 1 joueur je mets dans le message/game solo
+	//If only 1 player in the slobby we put it in the "Solo" lobby and in his lobby byt we don't display his lobby yet
 	
 	if(snipe.games[digits].players.length == 1) {
 		// Works because we expect only one player
@@ -140,26 +114,38 @@ function refreshBoard(digits) {
 		boardChannel.fetchMessages({around: snipe.games["Solo"].msgid, limit: 1}).then(messages => {
 			messages.first().edit(embedSolo);
 		});
-	}
 
+		let playersInLobby = getPlayerInLobbyString(digits);
+
+		const embed = new Discord.RichEmbed()
+			.setColor(0xC63B00)
+			.addField(digits + " ("+snipe.games[digits].players.length+"/25)", playersInLobby, true);
+
+		if(snipe.games[digits].msgid == null) {
+			boardChannel.send({embed}).then(sentMessage => snipe.games[digits].msgid = sentMessage.id);
+		} else {
+			boardChannel.fetchMessages({around: snipe.games[digits].msgid, limit: 1}).then(messages => {
+				messages.first().edit(embed);
+			});
+		}
+
+	} else {
+
+		let playersInLobby = getPlayerInLobbyString(digits);
+
+		const embed = new Discord.RichEmbed()
+			.setColor(0xC63B00)
+			.addField(digits + " ("+snipe.games[digits].players.length+"/25)", playersInLobby, true);
+
+		if(snipe.games[digits].msgid == null) {
+			boardChannel.send({embed}).then(sentMessage => snipe.games[digits].msgid = sentMessage.id);
+		} else {
+			boardChannel.fetchMessages({around: snipe.games[digits].msgid, limit: 1}).then(messages => {
+				messages.first().edit(embed);
+			});
+		}
 	
-
-	let playersInLobby = getPlayerInLobbyString(digits);
-
-	const embed = new Discord.RichEmbed()
-		.setColor(0xC63B00)
-		.addField(digits + " ("+snipe.games[digits].players.length+"/25)", playersInLobby, true);
-
-	if(snipe.games[digits].msgid == null) {
-		boardChannel.send({embed}).then(sentMessage => snipe.games[digits].msgid = sentMessage.id);
 	}
-	else {
-		boardChannel.fetchMessages({around: snipe.games[digits].msgid, limit: 1}).then(messages => {
-			messages.first().edit(embed);
-		});
-	}
-	
-	
 }
 
 function getPlayerInLobbyString(digits) {
@@ -171,8 +157,7 @@ function getPlayerInLobbyString(digits) {
 			playersInLobby += snipe.games[digits].players[player] + " ";
 		}
 	}
-	return playersInLobby
+	return playersInLobby;
 }
 
 client.login(config.token);
-

@@ -22,4 +22,3 @@ class Snipe {
 }
 
 module.exports = Snipe;
-
