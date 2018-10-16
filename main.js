@@ -1,6 +1,6 @@
 const Discord = require("discord.js");
 const Snipe = require("./Snipe.js");
-const config = require("./config.json");
+const config = require("./config.json.test");
 const client = new Discord.Client();
 const prefix = config.prefix;
 
@@ -84,18 +84,26 @@ client.on("message", msg => {
 			return;
 		}
 		let totalCaptains = 0;
+		// good lobby = more than 1 captain
+		let nbOfGoodLobby = 0;
 		for(var game in snipe.games) {
 			totalCaptains+=snipe.games[game].players.length;
+			if(snipe.games[game].players.length > 1) nbOfGoodLobby++;
 		}
 
 		let nbOfLobby = Object.keys(snipe.games).length;
-		let averageTeam = (totalCaptains / nbOfLobby).toFixed(2);
-		msg.channel.send("**Stats**\nLobby : " + nbOfLobby + "\nAverage teams : " + averageTeam + "\nTotal captains " + totalCaptains);
+		let averageTeam = (totalCaptains / nbOfGoodLobby).toFixed(2);
+		msg.channel.send("**Stats**\nTotal Lobby : " + nbOfLobby + "\nAverage teams (Not counting if only 1 captain) : " + averageTeam + "\nTotal captains " + totalCaptains);
 	}
 });
 
 
 function refreshBoard(digits) {
+	//Si dans ce digit juste 1 joueur je mets dans le message/game solo
+
+	//Sinon 
+		//Je supprime le joueur du message/game solo et je créé le message avec deux captains
+	
 	let playersInLobby = "";
 	if(snipe.games[digits].players.length == 0) {
 		playersInLobby = "No players";
