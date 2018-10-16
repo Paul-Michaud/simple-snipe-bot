@@ -9,7 +9,7 @@ let boardChannel;
 let adminChannel;
 
 let snipe = new Snipe();
-snipe.add("Solo", null);
+
 
 client.on("ready", () => {
 	console.log(`Logged in as ${client.user.tag}!`);
@@ -83,15 +83,26 @@ client.on("message", msg => {
 			return;
 		}
 		let totalCaptains = 0;
+		let totalCaptainsInGoodLobby = 0;
+
 		// good lobby = more than 1 captain
 		let nbOfGoodLobby = 0;
+		let nbOfLobby = 0;
 		for(var game in snipe.games) {
-			totalCaptains+=snipe.games[game].players.length;
-			if(snipe.games[game].players.length > 1) nbOfGoodLobby++;
+			if(game == "Solo") {
+				continue;
+			} else {
+				nbOfLobby++;
+				if(snipe.games[game].players.length > 1) {
+					nbOfGoodLobby++;
+					totalCaptainsInGoodLobby+=snipe.games[game].players.length;
+				}
+				totalCaptains+=snipe.games[game].players.length;
+
+			}
 		}
 
-		let nbOfLobby = Object.keys(snipe.games).length;
-		let averageTeam = (totalCaptains / nbOfGoodLobby).toFixed(2);
+		let averageTeam = (nbOfGoodLobby > 0 ? (totalCaptainsInGoodLobby / nbOfGoodLobby).toFixed(2) : 0);
 		msg.channel.send("**Stats**\nTotal Lobby : " + nbOfLobby + "\nAverage teams (Not counting if only 1 captain) : " + averageTeam + "\nTotal captains " + totalCaptains);
 	}
 });
@@ -103,22 +114,23 @@ function refreshBoard(digits) {
 	if(snipe.games[digits].players.length == 1) {
 		// Works because we expect only one player
 		// Should be "for each" otherwise
-		snipe.add("Solo", snipe.games[digits].players[0] + " (" + digits + ")");
+		snipe.add("Solo", snipe.games[digits].players[0] + " (**" + digits + "**)");
 		let playersSoloInLobby = getPlayerInLobbyString("Solo");
-
 		const embedSolo = new Discord.RichEmbed()
 		.setColor(0xC63B00)
 		.addField("Solo captains", playersSoloInLobby, true);
 
 		if(snipe.games["Solo"].msgid == null) {
-			boardChannel.send({embedSolo}).then(sentMessage => snipe.games["Solo"].msgid = sentMessage.id);
+			boardChannel.send(embedSolo).then(sentMessage => snipe.games["Solo"].msgid = sentMessage.id);
 		} else {
 			boardChannel.fetchMessages({around: snipe.games["Solo"].msgid, limit: 1}).then(messages => {
 				messages.first().edit(embedSolo);
 			});
 		}
+
+		return;
 	} else if (snipe.games[digits].players.length == 2) {
-		snipe.remove("Solo", snipe.games[digits].players[0] + " (" + digits + ")");
+		snipe.remove("Solo", snipe.games[digits].players[0] + " (**" + digits + "**)");
 		let playersSoloInLobby = getPlayerInLobbyString("Solo");
 
 		const embedSolo = new Discord.RichEmbed()
@@ -126,29 +138,31 @@ function refreshBoard(digits) {
 		.addField("Solo captains", playersSoloInLobby, true);
 
 		boardChannel.fetchMessages({around: snipe.games["Solo"].msgid, limit: 1}).then(messages => {
+			messages.first().edit(embedSolo);
+		});
+	}
+
+	
+
+	let playersInLobby = getPlayerInLobbyString(digits);
+
+	const embed = new Discord.RichEmbed()
+		.setColor(0xC63B00)
+		.addField(digits + " ("+snipe.games[digits].players.length+"/25)", playersInLobby, true);
+
+	if(snipe.games[digits].msgid == null) {
+		boardChannel.send({embed}).then(sentMessage => snipe.games[digits].msgid = sentMessage.id);
+	}
+	else {
+		boardChannel.fetchMessages({around: snipe.games[digits].msgid, limit: 1}).then(messages => {
 			messages.first().edit(embed);
 		});
-	} else {
-		let playersSoloInLobby = getPlayerInLobbyString(digits);
-	
-		const embed = new Discord.RichEmbed()
-			.setColor(0xC63B00)
-			.addField(digits + " ("+snipe.games[digits].players.length+"/25)", playersInLobby, true);
-	
-		if(snipe.games[digits].msgid == null) {
-			boardChannel.send({embed}).then(sentMessage => snipe.games[digits].msgid = sentMessage.id);
-		}
-		else {
-			boardChannel.fetchMessages({around: snipe.games[digits].msgid, limit: 1}).then(messages => {
-				messages.first().edit(embed);
-			});
-		}
 	}
 	
 	
 }
 
-function getPlayerInLobbyString(digit) {
+function getPlayerInLobbyString(digits) {
 	let playersInLobby = "";
 	if(snipe.games[digits].players.length == 0) {
 		playersInLobby = "No players";
