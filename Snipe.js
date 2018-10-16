@@ -3,7 +3,7 @@ class Snipe {
 
 	constructor() {
 		this.games = {};
-		this.add("Solo", "");
+		this.add("Solo", "->");
 	}
 
 	add(digits, player) {
@@ -22,3 +22,4 @@ class Snipe {
 }
 
 module.exports = Snipe;
+
