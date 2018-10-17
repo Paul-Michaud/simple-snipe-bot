@@ -3,6 +3,7 @@ class Snipe {
 
 	constructor() {
 		this.games = {};
+		this.add("Solo", "->");
 	}
 
 	add(digits, player) {
@@ -18,7 +19,6 @@ class Snipe {
 			this.games[digits].removePlayer(player);
 		}
 	}
-
 }
 
 module.exports = Snipe;
