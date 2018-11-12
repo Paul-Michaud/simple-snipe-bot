@@ -1,3 +1,5 @@
+//First discord bot, please be kind :3
+
 const Discord = require("discord.js");
 const Snipe = require("./Snipe.js");
 const config = require("./config.test.json");
@@ -45,12 +47,6 @@ client.on("message", msg => {
 		console.log("Call : add("+digits+","+user+")");
 		snipe.add(digits, user);
 		refreshBoard(digits);
-	} else if (command === "remove") {
-		if(args.length != 1) return;
-		const digits = args[0];
-		console.log("Call : remove("+digits+","+user+")");
-		snipe.remove(digits, user);
-		refreshBoard(digits);
 	} else if (command === "reset") {
 		if (msg.channel != adminChannel) return;
 
@@ -97,15 +93,9 @@ function refreshBoard(digits) {
 		.setColor(0xC63B00)
 		.addField("Solo captains", playersSoloInLobby, true);
 
-		if(snipe.games["Solo"].msgid == null) {
-			boardChannel.send(embedSolo).then(sentMessage => snipe.games["Solo"].msgid = sentMessage.id);
-		} else {
-			boardChannel.fetchMessages({around: snipe.games["Solo"].msgid, limit: 1}).then(messages => {
-				messages.first().edit(embedSolo);
-			});
-		}
+		createOrEditLobbyMessage(digits, playersSoloInLobby);
 
-		return;
+
 	} else if (snipe.games[digits].players.length == 2) {
 		snipe.remove("Solo", snipe.games[digits].players[0] + " (**" + digits + "**)");
 		let playersSoloInLobby = getPlayerInLobbyString("Solo");
@@ -124,13 +114,7 @@ function refreshBoard(digits) {
 			.setColor(0xC63B00)
 			.addField(digits + " ("+snipe.games[digits].players.length+"/25)", playersInLobby, true);
 
-		if(snipe.games[digits].msgid == null) {
-			boardChannel.send({embed}).then(sentMessage => snipe.games[digits].msgid = sentMessage.id);
-		} else {
-			boardChannel.fetchMessages({around: snipe.games[digits].msgid, limit: 1}).then(messages => {
-				messages.first().edit(embed);
-			});
-		}
+		createOrEditLobbyMessage(digits, embed);
 
 	} else {
 
@@ -140,13 +124,7 @@ function refreshBoard(digits) {
 			.setColor(0xC63B00)
 			.addField(digits + " ("+snipe.games[digits].players.length+"/25)", playersInLobby, true);
 
-		if(snipe.games[digits].msgid == null) {
-			boardChannel.send({embed}).then(sentMessage => snipe.games[digits].msgid = sentMessage.id);
-		} else {
-			boardChannel.fetchMessages({around: snipe.games[digits].msgid, limit: 1}).then(messages => {
-				messages.first().edit(embed);
-			});
-		}
+		createOrEditLobbyMessage(digits, embed);
 	
 	}
 }
@@ -161,6 +139,16 @@ function getPlayerInLobbyString(digits) {
 		}
 	}
 	return playersInLobby;
+}
+
+function createOrEditLobbyMessage(digits, embed) {
+	if(snipe.games[digits].msgid == null) {
+		boardChannel.send(embed).then(sentMessage => snipe.games[digits].msgid = sentMessage.id);
+	} else {
+		boardChannel.fetchMessages({around: snipe.games[digits].msgid, limit: 1}).then(messages => {
+			messages.first().edit(embed);
+		});
+	}
 }
 
 client.login(config.token);
